@@ -1,5 +1,5 @@
 <template>
-  <div id="home" class="d-flex">
+  <div id="home" @mousedown="incrementMiss">
     <div class="pl-7 pt-7">
       {{ num }}/{{ total }}セット目<br />
       成功回数：{{ success }}/{{ totalSuccess }}<br />
@@ -7,7 +7,7 @@
     </div>
     <!-- 左のカード -->
     <v-card
-      @mousedown="incrementSuccess"
+      @mousedown.stop="incrementSuccess"
       tile
       :width="width"
       :height="height"
@@ -30,7 +30,7 @@
     ></v-card>
     <!-- 右のカード -->
     <v-card
-      @mousedown="incrementSuccess"
+      @mousedown.stop="incrementSuccess"
       tile
       :width="width"
       :height="height"
@@ -76,6 +76,15 @@
     methods: {
       incrementSuccess(){
         this.success++
+      },
+      incrementMiss() {
+        if (this.success < this.totalSuccess) {
+          this.miss++;
+          this.targetColor = "yellow";
+          setTimeout(() => {
+            this.targetColor = "red";
+          }, 50);
+        }
       },
     },
     components: {
