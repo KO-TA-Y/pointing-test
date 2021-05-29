@@ -1,5 +1,5 @@
 <template>
-  <div id="home" @mousedown="incrementMiss">
+  <div id="home" @mousemove="mouseMove" @mousedown="incrementMiss">
     <div class="pl-7 pt-7">
       {{ num }}/{{ total }}セット目<br />
       成功回数：{{ success }}/{{ totalSuccess }}<br />
@@ -85,6 +85,10 @@
         diffTime: 0,      // 現在時刻 と スタートボタンを押した時刻 の差
         startTime: 0,     // スタートボタンを押した時刻
         isRunning: false, // タイマーが走っているか判定
+        t_pos_arr: [],    //マウスの軌跡を入れる場所
+        c_pos_arr: [],    //クリック座標を入れる場所
+        tmp_x_pos: "",
+        tmp_y_pos: "",
       }
     },
     methods: {
@@ -95,6 +99,13 @@
         if (this.success == this.totalSuccess - 1) {
           this.stopTimer()
         }
+        this.c_pos_arr.push({
+          section: this.num,
+          result: "success",
+          mouseX: this.tmp_x_pos,
+          mouseY: this.tmp_y_pos,
+          timestamp: this.diffTime,
+        });
         this.success++
       },
       incrementMiss() {
@@ -104,7 +115,18 @@
           setTimeout(() => {
             this.targetColor = "red";
           }, 50);
+          this.c_pos_arr.push({
+            section: this.num,
+            result: "miss",
+            mouseX: this.tmp_x_pos,
+            mouseY: this.tmp_y_pos,
+            timestamp: this.diffTime,
+          });
         }
+      },
+      mouseMove(e) {
+        this.tmp_x_pos = e.pageX;
+        this.tmp_y_pos = e.pageY;
       },
       // 現在時刻から引数に渡した数値を startTime に代入
       setSubtractStartTime: function (Time) {
@@ -122,12 +144,22 @@
           vm.nowTime = Math.floor(performance.now());
           vm.diffTime = vm.nowTime - vm.startTime;
           vm.animateFrame = requestAnimationFrame(loop);
+          if (vm.tmp_x_pos != "" && vm.tmp_y_pos != "") {
+            vm.t_pos_arr.push({
+              section: vm.num,
+              mouseX: vm.tmp_x_pos,
+              mouseY: vm.tmp_y_pos,
+              timestamp: vm.diffTime,
+            });
+          }
         }());
       },
       // タイマーを停止させる
       stopTimer: function () {
         this.isRunning = false;
         cancelAnimationFrame(this.animateFrame);
+        // console.log(this.t_pos_arr)
+        console.log(this.c_pos_arr)
       },
     },
     filters: {
