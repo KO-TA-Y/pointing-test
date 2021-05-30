@@ -61,7 +61,27 @@
         transform:`translate(0%,-50%) translateX(${distance/2}px)`
       }"
     ></v-card>
-
+    <div v-show="isInterval">
+      <v-card
+        color="deep-purple lighten-4"
+        height="30vh"
+        width="40vw"
+        class="d-flex align-center justify-space-around mx-auto"
+      >
+        {{ num }}セット目の記録<br />
+        {{ seconds | zeroPad }}.{{ milliSeconds | zeroPad(3) }}秒<br />
+        ミス回数：{{ miss }}
+      </v-card>
+      <v-card
+        color="orange"
+        height="30vh"
+        width="40vw"
+        class="d-flex align-center justify-space-around mt-6 mx-auto"
+      >
+        このオレンジ領域を<br />クリックすると<br />次のセットに進みます<br />
+        （次に進む前に休憩をとってOKです）
+      </v-card>
+    </div>
   </div>
 </template>
 
@@ -85,6 +105,7 @@
         diffTime: 0,      // 現在時刻 と スタートボタンを押した時刻 の差
         startTime: 0,     // スタートボタンを押した時刻
         isRunning: false, // タイマーが走っているか判定
+        isInterval: false,
         t_pos_arr: [],    //マウスの軌跡を入れる場所
         c_pos_arr: [],    //クリック座標を入れる場所
         tmp_x_pos: "",
@@ -157,6 +178,7 @@
       // タイマーを停止させる
       stopTimer: function () {
         this.isRunning = false;
+        this.isInterval = true
         cancelAnimationFrame(this.animateFrame);
         // console.log(this.t_pos_arr)
         console.log(this.c_pos_arr)
