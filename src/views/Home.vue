@@ -77,6 +77,7 @@
         height="30vh"
         width="40vw"
         class="d-flex align-center justify-space-around mt-6 mx-auto"
+        @mousedown.stop="toNext"
       >
         このオレンジ領域を<br />クリックすると<br />次のセットに進みます<br />
         （次に進む前に休憩をとってOKです）
@@ -110,6 +111,7 @@
         c_pos_arr: [],    //クリック座標を入れる場所
         tmp_x_pos: "",
         tmp_y_pos: "",
+        res_arr: [],      //各試行の結果を入れる場所
       }
     },
     methods: {
@@ -144,6 +146,25 @@
             timestamp: this.diffTime,
           });
         }
+      },
+      toNext(){
+        this.res_arr.push({
+          section: this.num,
+          width: this.width,
+          height: this.height,
+          time: this.diffTime/1000,
+          miss: this.miss
+        });
+        this.isInterval=false
+        this.num++
+        this.initVal()
+      },
+      initVal(){
+        this.success=0
+        this.miss=0
+        this.nowTime=0
+        this.diffTime=0
+        this.startTime=0
       },
       mouseMove(e) {
         this.tmp_x_pos = e.pageX;
