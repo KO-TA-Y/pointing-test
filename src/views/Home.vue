@@ -1,6 +1,10 @@
 <template>
-  <div id="home" @mousemove="mouseMove" @mousedown="incrementMiss">
-    <div class="pl-7 pt-7">
+  <div id="home" @mousemove="mouseMove" @mousedown="incrementMiss"   class="d-flex justify-center align-center" >
+    <div style="
+        position:absolute;
+        top:2%;
+        left:2%;
+      ">
       {{ num }}/{{ total }}セット目<br />
       成功回数：{{ success }}/{{ totalSuccess }}<br />
       ミス回数：{{ miss }}
@@ -19,8 +23,8 @@
     <v-card
       @mousedown.stop="incrementSuccess"
       tile
-      :width="width"
-      :height="height"
+      :width=conditions[num].wid
+      :height=conditions[num].hei
       :color="
             success % 2 == 0 && success < totalSuccess
               ? targetColor
@@ -32,18 +36,16 @@
               : true
           "
       :style="{
-        position:`absolute`,
-        top:`50%`,
-        left:`50%`,
-        transform:`translate(-100%,-50%) translateX(-${distance/2}px)`
+
+        transform:`translateX(-${distance/2}px)`
       }"
     ></v-card>
     <!-- 右のカード -->
     <v-card
       @mousedown.stop="incrementSuccess"
       tile
-      :width="width"
-      :height="height"
+      :width=conditions[num].wid
+      :height=conditions[num].hei
       :color="
             success % 2 == 0 || success >= totalSuccess
               ? disabledColor
@@ -55,13 +57,11 @@
               : false
           "
       :style="{
-        position:`absolute`,
-        top:`50%`,
-        left:`50%`,
-        transform:`translate(0%,-50%) translateX(${distance/2}px)`
+
+        transform:`translateX(${distance/2}px)`
       }"
     ></v-card>
-    <div v-show="isInterval">
+    <div v-show="isInterval" style="position:absolute">
       <v-card
         color="deep-purple lighten-4"
         height="30vh"
@@ -87,15 +87,21 @@
 </template>
 
 <script>
+  import _ from 'lodash'
+  import firebase from 'firebase'
   export default {
     name: 'Home',
     data() {
       return {
         distance:100,
-        width:100,
+        width:[100,200,300],
         height:100,
+        disArr: [200, 300, 400],
+        widArr: [100, 150, 200],
+        heiArr: [100, 150, 200],
+        conditions:[],
         num:1,
-        total:36,
+        total:3,
         totalSuccess:7,
         success:0, //ボタンを押したら増えて、偶奇で色などを変える
         miss:0,
@@ -113,6 +119,10 @@
         tmp_y_pos: "",
         res_arr: [],      //各試行の結果を入れる場所
       }
+    },
+    created() {
+      this.randomizeParams()
+      this.conditions = _.shuffle(this.conditions)
     },
     methods: {
       incrementSuccess(){
@@ -156,8 +166,14 @@
           miss: this.miss
         });
         this.isInterval=false
+        this.uploadCSV(this.res_arr,"result")
+        if(this.num==this.total){
+          //データ送って終了
+          // console.log(this.t_pos_arr,this.c_pos_arr,this.res_arr)
+        }else{
         this.num++
         this.initVal()
+        }
       },
       initVal(){
         this.success=0
@@ -203,6 +219,58 @@
         cancelAnimationFrame(this.animateFrame);
         // console.log(this.t_pos_arr)
         console.log(this.c_pos_arr)
+        this.uploadCSV(this.c_pos_arr,"click_mouse")
+        this.uploadCSV(this.t_pos_arr,"pos_mouse")
+      },
+      randomizeParams() {
+        let cntGlobal = 0;
+        for (let cntDis = 0; cntDis < this.disArr.length; cntDis++) {
+          for (let cntW = 0; cntW < this.widArr.length; cntW++) {
+            for (let cntH = 0; cntH < this.heiArr.length; cntH++) {
+              this.conditions.push({
+                dis: this.disArr[cntDis],
+                wid: this.widArr[cntW],
+                hei: this.heiArr[cntH],
+              }),
+                cntGlobal++;
+            }
+          }
+        }
+        this.conditions = _.shuffle(this.conditions)
+      },
+      uploadCSV (data, file_name) {
+        var lastkey = Object.keys(data[0]).pop();
+        var csv = '\ufeff'
+        for(const key of Object.keys(data[0])){
+          csv += key + ( lastkey !==key?',':'\n')
+        }
+        console.log(csv)
+        data.forEach(el => {
+          var line = ''
+          for(const key of Object.keys(data[0])){
+            line += el[key] + ( lastkey !==key?',':'\n')
+          }
+          csv += line
+        })
+        let blob = new Blob([csv], { type: 'text/csv' })
+        var storageRef = firebase.storage().ref()
+        var mountainsRef = storageRef.child(file_name+".csv")
+        mountainsRef.put(blob).then((snapshot) => {
+          //アップロード完了
+          mountainsRef
+            .getDownloadURL()
+            .then((url) => {
+              //アップロードした画像の保存場所のURLを取得する
+              console.log(url, snapshot);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        });
+        // let link = document.createElement('a')
+        // link.href = window.URL.createObjectURL(blob)
+        // link.download = 'Result.csv'
+        // link.click()
       },
     },
     filters: {
